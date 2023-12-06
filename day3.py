@@ -124,47 +124,34 @@ def mask_numbers(path):
 
 
 def get_sum(path):
-    find_nums = [int(s) for s in mask_numbers(path).split(" ") if s != ""]
+    find_nums = [int(s.strip()) for s in mask_numbers(path).strip().split(" ")]
     return sum(find_nums)
 
 
 def masked_gears(path):
     sym_board, num_board, line_len, lines, str_seq = read_input(path, gears=True)
-    l_zero = left_zero(line_len, lines)
-    r_zero = right_zero(line_len, lines)
-    sym_string = f"{sym_board:b}"
+    l_zero = left_zero(line_len, 3)
+    r_zero = right_zero(line_len, 3)
+    num_mask = int("1" * (line_len * 3), 2)
+
     gear_nums = []
-    for i in range(1, sym_board.bit_length() + 1):
-        if sym_string[-i] == "1":
-            this_gear = 1 << (i - 1)
+    for i in range(sym_board.bit_length()):
+        if sym_board >> i & 1:
+            line_num = max(int((i) / line_len), 1)
 
+            this_gear = 1 << (i - (line_len * (line_num - 1)))
             sym_grid = symbol_grid(this_gear, l_zero, r_zero, line_len)
-            link_mask = linked_nums(sym_grid, num_board, l_zero, r_zero, line_len)
+            short_nums = (num_board >> (line_len * (line_num - 1))) & num_mask
+            link_mask = linked_nums(sym_grid, short_nums, l_zero, r_zero, line_len)
 
-            str_mask = f"{link_mask:0>{line_len * lines}b}"
+            short_str = (str_seq + " ")[-((line_num + 2) * line_len + 1):-((line_num - 1) * line_len + 1)]
 
-            masked_nums = []
-            for i in range(len(str_mask)):
-                next_char = str_seq[i] if str_mask[i] == "1" else " "
-                masked_nums.append(next_char)
+            masked_str = [short_str[-(j + 1)] if (link_mask >> j & 1) else " " for j in range(link_mask.bit_length())][-1::-1]
 
-            numbers = "".join(masked_nums)
+            numbers = "".join(masked_str)
 
-            find_nums = [int(s) for s in numbers.split(" ") if s != ""]
+            find_nums = [int(s.strip()) for s in numbers.strip().split()]
             if len(find_nums) == 2:
                 gear_nums.append(find_nums[0] * find_nums[1])
 
     return sum(gear_nums)
-
-
-
-    # str_mask = f"{link_mask:0>{line_len * lines}b}"
-
-    # masked_nums = []
-    # for i in range(len(str_mask)):
-    #     next_char = str_seq[i] if str_mask[i] == "1" else " "
-    #     masked_nums.append(next_char)
-
-    # return "".join(masked_nums)
-
-
