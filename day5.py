@@ -4,7 +4,9 @@ Created on Tue Dec  5 15:06:48 2023
 
 @author: Hanchen Wang
 """
-
+from multiprocessing import Pool
+from day5_mp import mp_map_loc, mp_map_loc_full
+import itertools
 
 def read_input(path):
     seeds = []
@@ -82,10 +84,24 @@ def part1(path):
     return min(loc)
 
 
+
 def part2(path):
     seed_list, mapped = map_input(path)
-    seeds_range = [(seed_list[i], seed_list[i] + seed_list[i+1]) for i in range(0, len(seed_list), 2)]
-    l = [map_loc_step(n, mapped) for n in seed_list]
+    seeds_range = [(seed_list[i], seed_list[i] + seed_list[i+1], seed_list[i+1]) for i in range(0, len(seed_list), 2)]
+    seeds_redist = []
+    min_rng = min(i[2] for i in seeds_range)
+    for rng in seeds_range:
+        start = rng[0]
+        step = min_rng
+        while start < rng[0] + rng[2]:
+            seeds_redist.append((start, start + step, step))
+            start += step
+            step = min(min_rng, rng[1] - start)
+    
+    with Pool(20) as pool:
+        results = pool.map(mp_map_loc, [(s_rng, mapped) for s_rng in seeds_redist])
+    
+    return results
 
 
 def invert_map(data):
